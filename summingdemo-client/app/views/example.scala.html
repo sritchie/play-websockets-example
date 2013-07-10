@@ -1,0 +1,57 @@
+@(id: String, keyString: String)(implicit request: RequestHeader)
+
+<div id="content">
+  <div id="chart"></div>
+  <script type="text/javascript">
+    var charts = []
+    </script>
+</div>
+
+<script type="text/javascript">
+var socket = new WebSocket(
+  "@routes.Application.initialize(id, keyString).webSocketURL()"
+)
+socket.onmessage = function(event) {
+  var datapoint = jQuery.parseJSON(event.data);
+  if(typeof charts['@id'] == 'undefined') {
+    console.log("DEFINING" + '@id')
+    var newSeries = []
+    for (k in datapoint.pairs) {
+      console.log("DEFINING KEY: " + k)
+      newSeries.push({name: k, data: []})
+    }
+    charts['@id'] = new Highcharts.Chart({
+      chart: {
+        renderTo: 'chart',
+        defaultSeriesType: 'spline'
+      },
+        xAxis: {
+        type: 'datetime'
+      },
+        series: newSeries
+    });
+  }
+  var chart = charts['@id']
+  var idx = 0
+  for (k in datapoint.pairs) {
+    console.log("SERIES" + '@id' + chart)
+    chart.series[idx].addPoint({
+       x: datapoint.timestamp,
+       y: datapoint.pairs[k]
+    }, true, chart.series[idx].data.length >= 50 );
+    idx += 1;
+  }
+
+}
+<!-- socket.onmessage = function( event ) { -->
+<!-- 	var datapoint = jQuery.parseJSON( event.data ); -->
+<!-- 	var chart = charts[ '@id' ] -->
+<!--     for (key in datapoint.letters) { -->
+<!--       chart.series[ parseInt(key) ].addPoint({ -->
+<!--         x: datapoint.timestamp, -->
+<!--         y: datapoint.letters[key], -->
+<!--         marker: { enabled: false } -->
+<!--     }, true, chart.series[ parseInt(key) ].data.length >= 50 ); -->
+<!--     } -->
+<!-- } -->
+</script>

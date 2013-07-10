@@ -1,0 +1,41 @@
+@(id: String, example: Example)( implicit request: RequestHeader )
+
+<div id="content">
+	<div id="chart"></div>
+
+    <script type="text/javascript">
+        var characters = 'abcdefghijklmnopqrstuvwxyz'.split('')
+        var series = characters.map(function(c) {
+          return { name: c, data: [] }
+        })
+        var charts = []
+	charts[ '@id' ] = new Highcharts.Chart({
+	        chart: {
+	            renderTo: 'chart',
+	            defaultSeriesType: 'spline'
+	        },
+	        xAxis: {
+                type: 'datetime'
+            },
+	        series: series
+	    });
+        charts[ '@id' ].setSize(900, 600)
+    </script>
+</div>
+
+<script type="text/javascript">
+var socket = new WebSocket(
+  "@routes.Application.initialize(id, "").webSocketURL()"
+)
+socket.onmessage = function( event ) {
+	var datapoint = jQuery.parseJSON( event.data );
+	var chart = charts[ '@id' ]
+    for (key in datapoint.letters) {
+      chart.series[ parseInt(key) ].addPoint({
+        x: datapoint.timestamp,
+        y: datapoint.letters[key],
+        marker: { enabled: false }
+    }, true, chart.series[ parseInt(key) ].data.length >= 50 );
+    }
+}
+</script>
